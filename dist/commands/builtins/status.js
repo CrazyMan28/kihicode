@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 const statusCommand = {
     name: 'status',
     description: 'Show session status and providers',
@@ -10,4 +8,5 @@ const statusCommand = {
         ctx.stdout(`Commands: ${cmdCount}\nProviders: ${providers.length ? providers.join(', ') : 'none'}\nSubagents: ${jobs.length} jobs`);
     },
 };
-exports.default = statusCommand;
+export default statusCommand;
+//# sourceMappingURL=status.js.map

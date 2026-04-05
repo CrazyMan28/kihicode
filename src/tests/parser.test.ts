@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseSlash } from '../commands/parser';
+import { parseSlash } from '../commands/parser.js';
 
 describe('parseSlash', () => {
   it('parses simple command without args', () => {

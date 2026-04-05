@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 const clearCommand = {
     name: 'clear',
     description: 'Clear the screen',
@@ -7,4 +5,5 @@ const clearCommand = {
         process.stdout.write('\x1Bc');
     },
 };
-exports.default = clearCommand;
+export default clearCommand;
+//# sourceMappingURL=clear.js.map

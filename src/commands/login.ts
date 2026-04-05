@@ -1,7 +1,7 @@
 import inquirer from 'inquirer';
-import { Command } from './Command';
-import AuthStore from '../auth/store';
-import { validateProviderKey } from '../auth/providers';
+import { Command } from './Command.js';
+import AuthStore from '../auth/store.js';
+import { validateProviderKey } from '../auth/providers.js';
 
 function parseFlags(args: string[]): Record<string, string> {
   const flags: Record<string, string> = {};

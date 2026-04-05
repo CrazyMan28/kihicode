@@ -1,10 +1,5 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const store_1 = __importDefault(require("../../memory/store"));
-const memory = new store_1.default();
+import MemoryStore from '../../memory/store.js';
+const memory = new MemoryStore();
 const forgetCommand = {
     name: 'forget',
     description: 'Forget a memory item by id (usage: /forget <id>)',
@@ -18,4 +13,5 @@ const forgetCommand = {
         ctx.stdout(ok ? `Forgot ${id}` : `Failed to forget ${id}`);
     },
 };
-exports.default = forgetCommand;
+export default forgetCommand;
+//# sourceMappingURL=forget.js.map

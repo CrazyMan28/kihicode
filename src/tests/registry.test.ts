@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CommandRegistry } from '../commands/registry';
+import { CommandRegistry } from '../commands/registry.js';
 
 describe('CommandRegistry', () => {
   it('registers and executes a command', async () => {

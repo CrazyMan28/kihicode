@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 const subagentCommand = {
     name: 'subagent',
     description: 'Manage background subagents: start/list/status',
@@ -37,4 +35,5 @@ const subagentCommand = {
         ctx.stdout('Usage: /subagent start|list|status <id>');
     },
 };
-exports.default = subagentCommand;
+export default subagentCommand;
+//# sourceMappingURL=subagent.js.map

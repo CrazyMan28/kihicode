@@ -1,16 +1,11 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const inquirer_1 = __importDefault(require("inquirer"));
+import inquirer from 'inquirer';
 const logoutCommand = {
     name: 'logout',
     description: 'Remove stored credentials for a provider',
     async execute(ctx, args) {
         let provider = args && args.length ? args[0] : undefined;
         if (!provider) {
-            const res = await inquirer_1.default.prompt([{ type: 'input', name: 'provider', message: 'Provider to logout (e.g. openai)' }]);
+            const res = await inquirer.prompt([{ type: 'input', name: 'provider', message: 'Provider to logout (e.g. openai)' }]);
             provider = res.provider;
         }
         try {
@@ -22,4 +17,5 @@ const logoutCommand = {
         }
     },
 };
-exports.default = logoutCommand;
+export default logoutCommand;
+//# sourceMappingURL=logout.js.map

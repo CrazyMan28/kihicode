@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseSlash = parseSlash;
-function parseSlash(input) {
+export function parseSlash(input) {
     const trimmed = input.trim();
     if (!trimmed.startsWith('/'))
         throw new Error('Not a slash command');
@@ -14,3 +11,4 @@ function parseSlash(input) {
     }
     return { name: tokens[0] ?? '', args: tokens.slice(1) };
 }
+//# sourceMappingURL=parser.js.map

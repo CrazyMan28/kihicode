@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
-import { Command } from './Command';
+import { Command } from './Command.js';
 
 export async function loadCustomCommands(registry: { register: (c: Command) => void }, baseDir?: string) {
   const dir = baseDir ?? path.join(process.cwd(), '.kihicode', 'commands');

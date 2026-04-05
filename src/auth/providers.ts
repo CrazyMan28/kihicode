@@ -1,6 +1,6 @@
-import openaiValidate from './adapters/openai';
-import anthropicValidate from './adapters/anthropic';
-import hfValidate from './adapters/huggingface';
+import openaiValidate from './adapters/openai.js';
+import anthropicValidate from './adapters/anthropic.js';
+import hfValidate from './adapters/huggingface.js';
 
 export async function validateProviderKey(provider: string, apiKey: string): Promise<boolean> {
   if (!apiKey || apiKey.length < 8) return false;

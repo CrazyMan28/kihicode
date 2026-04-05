@@ -1,15 +1,9 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.runPythonAgent = runPythonAgent;
-const child_process_1 = require("child_process");
-const path_1 = __importDefault(require("path"));
-async function runPythonAgent(args) {
+import { spawn } from 'child_process';
+import path from 'path';
+export async function runPythonAgent(args) {
     return new Promise((resolve) => {
-        const script = path_1.default.resolve(process.cwd(), 'agent', 'kihicode-secure');
-        const proc = (0, child_process_1.spawn)(script, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+        const script = path.resolve(process.cwd(), 'agent', 'kihicode-secure');
+        const proc = spawn(script, args, { stdio: ['ignore', 'pipe', 'pipe'] });
         let out = '';
         let err = '';
         if (proc.stdout) {
@@ -24,4 +18,5 @@ async function runPythonAgent(args) {
         proc.on('error', (e) => resolve({ stdout: out, stderr: String(e), code: null }));
     });
 }
-exports.default = runPythonAgent;
+export default runPythonAgent;
+//# sourceMappingURL=runPythonAgent.js.map

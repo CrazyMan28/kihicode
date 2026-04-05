@@ -1,5 +1,5 @@
-import { Command } from '../Command';
-import MemoryStore from '../../memory/store';
+import { Command } from '../Command.js';
+import MemoryStore from '../../memory/store.js';
 
 const memory = new MemoryStore();
 

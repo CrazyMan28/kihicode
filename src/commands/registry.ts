@@ -1,5 +1,5 @@
-import { Command } from './Command';
-import { parseSlash } from './parser';
+import { Command } from './Command.js';
+import { parseSlash } from './parser.js';
 
 export class CommandRegistry {
   private commands: Map<string, Command> = new Map();

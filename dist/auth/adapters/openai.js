@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = validateOpenAI;
-async function validateOpenAI(key) {
+export default async function validateOpenAI(key) {
     try {
         const res = await fetch('https://api.openai.com/v1/models', {
             method: 'GET',
@@ -13,3 +10,4 @@ async function validateOpenAI(key) {
         return false;
     }
 }
+//# sourceMappingURL=openai.js.map

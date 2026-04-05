@@ -1,17 +1,17 @@
-import { CommandRegistry } from './registry';
-import helpCommand from './builtins/help';
-import exitCommand from './builtins/exit';
-import loginCommand from './login';
-import clearCommand from './builtins/clear';
-import statusCommand from './builtins/status';
-import addDirCommand from './builtins/addDir';
-import contextCommand from './builtins/context';
-import rememberCommand from './builtins/remember';
-import memoryCommand from './builtins/memory';
-import forgetCommand from './builtins/forget';
-import subagentCommand from './builtins/subagent';
-import logoutCommand from './builtins/logout';
-import { loadCustomCommands } from './loader';
+import { CommandRegistry } from './registry.js';
+import helpCommand from './builtins/help.js';
+import exitCommand from './builtins/exit.js';
+import loginCommand from './login.js';
+import clearCommand from './builtins/clear.js';
+import statusCommand from './builtins/status.js';
+import addDirCommand from './builtins/addDir.js';
+import contextCommand from './builtins/context.js';
+import rememberCommand from './builtins/remember.js';
+import memoryCommand from './builtins/memory.js';
+import forgetCommand from './builtins/forget.js';
+import subagentCommand from './builtins/subagent.js';
+import logoutCommand from './builtins/logout.js';
+import { loadCustomCommands } from './loader.js';
 
 export const registry = new CommandRegistry();
 

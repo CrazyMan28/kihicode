@@ -1,11 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CommandRegistry = void 0;
-const parser_1 = require("./parser");
-class CommandRegistry {
-    constructor() {
-        this.commands = new Map();
-    }
+import { parseSlash } from './parser.js';
+export class CommandRegistry {
+    commands = new Map();
     register(cmd) {
         if (!cmd || !cmd.name)
             throw new Error('Invalid command');
@@ -19,7 +14,7 @@ class CommandRegistry {
     }
     async execute(rawInput, ctx) {
         try {
-            const { name, args } = (0, parser_1.parseSlash)(rawInput);
+            const { name, args } = parseSlash(rawInput);
             if (!name) {
                 ctx.stdout('No command provided.');
                 return;
@@ -36,4 +31,4 @@ class CommandRegistry {
         }
     }
 }
-exports.CommandRegistry = CommandRegistry;
+//# sourceMappingURL=registry.js.map

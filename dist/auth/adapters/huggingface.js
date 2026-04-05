@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = validateHF;
-async function validateHF(key) {
+export default async function validateHF(key) {
     try {
         const res = await fetch('https://api-inference.huggingface.co/models', {
             method: 'GET',
@@ -13,3 +10,4 @@ async function validateHF(key) {
         return false;
     }
 }
+//# sourceMappingURL=huggingface.js.map

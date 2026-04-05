@@ -1,5 +1,5 @@
 import inquirer from 'inquirer';
-import { Command } from '../Command';
+import { Command } from '../Command.js';
 
 const logoutCommand: Command = {
   name: 'logout',

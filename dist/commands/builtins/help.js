@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 const helpCommand = {
     name: 'help',
     description: 'Show available commands or details for a command',
@@ -20,4 +18,5 @@ const helpCommand = {
         ctx.stdout(`/${cmd.name} - ${cmd.description || ''}`);
     },
 };
-exports.default = helpCommand;
+export default helpCommand;
+//# sourceMappingURL=help.js.map

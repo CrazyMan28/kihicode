@@ -1,160 +1,166 @@
-let Anthropic: any = null;
-try {
-  // require the SDK only if available; this keeps the project runnable without the dependency
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const mod = require('@anthropic-ai/sdk');
-  Anthropic = mod && (mod.default || mod);
-} catch (e) {
-  Anthropic = null;
+import { generateText, tool } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
+import { z } from 'zod';
+import { Tools } from './tools.js';
+import { AuthStore } from '../config/auth.js';
+import { PluginLoader } from './plugins.js';
+import fs from 'fs-extra';
+import path from 'path';
+
+export interface AgentState {
+  role?: 'agent' | 'system' | 'user';
+  message?: string;
+  log?: string;
+  logType?: 'info' | 'error' | 'command' | 'stdout' | 'stderr';
+  status?: string;
 }
-import { registry } from '../tools/registry';
 
-export class AgentLoop {
-  private client: any;
-  private apiKey?: string;
-  private isStub: boolean = false;
-  private messageHistory: any[] = [];
-  private mode: 'safe' | 'yolo' = 'safe';
-  // pending approvals map: tool_use_id -> {resolve, reject}
-  private pendingApprovals: Map<string, { resolve: (v: any) => void; reject: (e: any) => void }> = new Map();
-
-  constructor(apiKey?: string) {
-    if (apiKey) {
-      this.setApiKey(apiKey);
-    } else {
-      this.isStub = true;
-      this.client = null;
-    }
-  }
+export const AgentLoop = {
+  private_apiKey: '',
 
   setApiKey(key: string) {
-    this.apiKey = key;
-    try {
-      this.client = new Anthropic({ apiKey: key });
-      this.isStub = false;
-    } catch (err) {
-      // fallback to stub
-      this.isStub = true;
-      this.client = null;
-    }
-  }
+    this.private_apiKey = key;
+  },
 
-  setMode(mode: 'safe' | 'yolo') {
-    this.mode = mode;
-  }
-
-  // Called by UI to respond to a pending approval request
-  respondToApproval(toolUseId: string, approved: boolean, editedArgs?: any) {
-    const pending = this.pendingApprovals.get(toolUseId);
-    if (!pending) return false;
-    pending.resolve({ approved, args: editedArgs });
-    this.pendingApprovals.delete(toolUseId);
-    return true;
-  }
-
-  async run(userInput: string, onUpdate: (state: any) => void) {
-    this.messageHistory.push({ role: 'user', content: userInput });
+  async run(query: string, onUpdate: (state: AgentState) => void, options: { maxLoops?: number } = {}) {
+    let processedQuery = query;
     
-    let isRunning = true;
-    while (isRunning) {
-      onUpdate({ status: 'thinking' });
-
-      try {
-        let response: any;
-        if (this.isStub || !this.client) {
-          // simple local stub: echo and helpful hint
-          const lastUser = this.messageHistory.slice().reverse().find((m: any) => m.role === 'user');
-          const lastText = lastUser ? (typeof lastUser.content === 'string' ? lastUser.content : JSON.stringify(lastUser.content)) : '';
-          response = {
-            content: [
-              { type: 'text', text: `No LLM configured. To enable full AI features set ANTHROPIC_API_KEY in your .env or run '/auth <key>'.\n\nStub reply (echo): ${lastText}` }
-            ]
-          };
-        } else {
-          response = await this.client.messages.create({
-            model: 'claude-3-5-sonnet-20241022',
-            max_tokens: 4096,
-            messages: this.messageHistory,
-            tools: registry.getAllTools().map(t => ({
-              name: t.name,
-              description: t.description,
-              input_schema: {
-                type: 'object',
-                properties: t.schema.shape,
-              }
-            }))
-          });
-        }
-
-        const textBlock = response.content.find((c: any) => c.type === 'text');
-        const toolCalls = response.content.filter((c: any) => c.type === 'tool_use');
-
-        if (textBlock) {
-          onUpdate({ status: 'message', content: textBlock.text });
-          this.messageHistory.push({ role: 'assistant', content: response.content });
-          isRunning = false;
-        }
-
-        if (toolCalls.length > 0) {
-          if (!textBlock) {
-            this.messageHistory.push({ role: 'assistant', content: response.content });
-          }
-          
-          for (const toolCall of toolCalls) {
-            const tool = registry.getTool(toolCall.name);
-            if (!tool) {
-              this.addToolResult(toolCall.id, `Error: Tool ${toolCall.name} not found.`);
-              continue;
-            }
-
-            onUpdate({ status: 'tool_calling', tool: tool.name, args: toolCall.input });
-
-            // Permission Check: if tool is sensitive and mode is safe, request approval from UI
-            let execArgs = toolCall.input;
-            if (tool.sensitive && this.mode === 'safe') {
-              // notify UI and wait for approval
-              onUpdate({ status: 'permission', tool: tool.name, args: toolCall.input, id: toolCall.id });
-              // create a promise and wait for UI to respond
-              const approval = await new Promise<{ approved: boolean; args?: any }>((resolve, reject) => {
-                this.pendingApprovals.set(toolCall.id, { resolve, reject });
-                // Note: UI should call `respondToApproval(toolUseId, approved, editedArgs)` to resolve
-              });
-
-              if (!approval.approved) {
-                this.addToolResult(toolCall.id, `Permission denied for tool ${tool.name}.`);
-                continue; // skip execution
-              }
-
-              if (approval.args) execArgs = approval.args;
-            }
-
-            try {
-              const result = await tool.execute(execArgs);
-              this.addToolResult(toolCall.id, typeof result === 'string' ? result : JSON.stringify(result));
-            } catch (error: any) {
-              this.addToolResult(toolCall.id, `Error: ${error.message}`);
-            }
-          }
-        } else if (!textBlock) {
-          isRunning = false;
-        }
-      } catch (error: any) {
-        onUpdate({ status: 'message', content: `API Error: ${error.message}` });
-        isRunning = false;
+    // Support @filename syntax
+    const fileMatches = query.match(/@([\w\.\/]+)/g);
+    if (fileMatches) {
+      for (const match of fileMatches) {
+        const filePath = match.slice(1);
+        try {
+          const content = await fs.readFile(filePath, 'utf-8');
+          processedQuery = processedQuery.replace(match, `\nFile: ${filePath}\nContent:\n${content}\n`);
+        } catch (err) {}
       }
     }
-  }
 
-  private addToolResult(toolId: string, content: string) {
-    this.messageHistory.push({
-      role: 'user',
-      content: [
-        {
-          type: 'tool_result',
-          tool_use_id: toolId,
-          content: content
+    let loops = 0;
+    const maxLoops = options.maxLoops || 1;
+
+    const auth = new AuthStore();
+    const apiKey = this.private_apiKey || auth.getKey('openai');
+
+    if (!apiKey) {
+      onUpdate({ role: 'system', message: 'Error: OpenAI API key not found. Use /login to set it.' });
+      return;
+    }
+
+    const openai = createOpenAI({ apiKey });
+
+    while (loops < maxLoops) {
+      onUpdate({ role: 'system', status: 'thinking', message: loops === 0 ? `Processing: ${query}` : `Autopilot loop ${loops + 1}/${maxLoops}` });
+
+      try {
+        const plugins = await PluginLoader.loadPlugins();
+
+        const { text } = await generateText({
+          model: openai('gpt-4o') as any,
+          system: `You are Kihicode, a senior agentic AI. 
+          You have full access to the shell and filesystem. 
+          When you need to act, use the available tools. 
+          Always explain your plan before using tools.
+          If in Autopilot mode, once a task is done, suggest a new feature or an audit to perform.`,
+          prompt: processedQuery,
+          tools: {
+            executeShell: tool({
+              description: 'Execute a bash command securely',
+              parameters: z.object({
+                command: z.string().describe('The command to run')
+              }),
+              execute: async ({ command }) => {
+                onUpdate({ logType: 'command', log: command, status: 'acting' });
+                const result = await Tools.executeShell(command);
+                onUpdate({ 
+                  logType: result.exitCode === 0 ? 'stdout' : 'stderr', 
+                  log: result.stdout || result.stderr 
+                });
+                return result;
+              }
+            }),
+            readFile: tool({
+              description: 'Read a file from the filesystem',
+              parameters: z.object({
+                path: z.string().describe('Path to the file')
+              }),
+              execute: async ({ path }) => {
+                return await Tools.readFile(path);
+              }
+            }),
+            writeFile: tool({
+              description: 'Write a file to the filesystem',
+              parameters: z.object({
+                path: z.string().describe('Path to the file'),
+                content: z.string().describe('Content to write')
+              }),
+              execute: async ({ path, content }) => {
+                return await Tools.writeFile(path, content);
+              }
+            }),
+            createCustomTool: tool({
+              description: 'Create a new custom tool/plugin for the current session',
+              parameters: z.object({
+                name: z.string().describe('Name of the tool'),
+                description: z.string().describe('Description of what it does'),
+                code: z.string().describe('TS code for the execute function body')
+              }),
+              execute: async ({ name, description, code }) => {
+                const p = await PluginLoader.createPlugin(name, description, code);
+                onUpdate({ logType: 'info', log: `New tool created: ${name} at ${p}` });
+                return { success: true, path: p };
+              }
+            }),
+            ...plugins
+          },
+          maxSteps: 20
+        });
+
+        onUpdate({ role: 'agent', message: text, status: 'done' });
+        loops++;
+
+        if (loops < maxLoops) {
+          processedQuery = `The previous task is complete. Review the codebase and suggest a new feature or security audit to perform. Then proceed to implement it.`;
         }
-      ]
+      } catch (err: any) {
+        onUpdate({ role: 'system', message: `Error: ${err.message}`, status: 'idle' });
+        break;
+      }
+    }
+  },
+
+  async process(query: string, store: any, options: { maxLoops?: number } = {}) {
+    // Adapter for TUI store
+    await this.run(query, (state) => {
+      if (state.message) store.addMessage(state.role || 'agent', state.message);
+      if (state.log) store.addLog(state.logType || 'info', state.log);
+      if (state.status) store.setStatus(state.status as any);
+    }, options);
+  },
+
+  async plan(query: string, store: any) {
+    const auth = new AuthStore();
+    const apiKey = this.private_apiKey || auth.getKey('openai');
+    if (!apiKey) {
+      store.addMessage('agent', 'Error: OpenAI API key not found.');
+      return;
+    }
+    const openai = createOpenAI({ apiKey });
+    store.setStatus('thinking');
+    
+    const { text } = await generateText({
+      model: openai('gpt-4o') as any,
+      system: 'You are an architect. Provide a step-by-step breakdown. DO NOT execute tools.',
+      prompt: query
     });
+
+    store.addMessage('agent', text);
+    store.setStatus('idle');
+  },
+
+  respondToApproval(id: string, approved: boolean, args: any) {
+    // Placeholder for human-in-the-loop
+    return true;
   }
-}
+};

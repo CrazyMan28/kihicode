@@ -1,4 +1,4 @@
-import { Command } from '../Command';
+import { Command } from '../Command.js';
 
 const helpCommand: Command = {
   name: 'help',

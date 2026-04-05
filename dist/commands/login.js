@@ -1,11 +1,6 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const inquirer_1 = __importDefault(require("inquirer"));
-const store_1 = __importDefault(require("../auth/store"));
-const providers_1 = require("../auth/providers");
+import inquirer from 'inquirer';
+import AuthStore from '../auth/store.js';
+import { validateProviderKey } from '../auth/providers.js';
 function parseFlags(args) {
     const flags = {};
     let i = 0;
@@ -34,17 +29,17 @@ const loginCommand = {
         let provider = flags['provider'];
         let key = flags['key'];
         if (!provider) {
-            const res = await inquirer_1.default.prompt([{ type: 'list', name: 'provider', message: 'Select provider', choices: ['openai', 'anthropic', 'huggingface'] }]);
+            const res = await inquirer.prompt([{ type: 'list', name: 'provider', message: 'Select provider', choices: ['openai', 'anthropic', 'huggingface'] }]);
             provider = res.provider;
         }
         if (!key) {
-            const res = await inquirer_1.default.prompt([{ type: 'password', name: 'key', message: `Enter API key for ${provider}` }]);
+            const res = await inquirer.prompt([{ type: 'password', name: 'key', message: `Enter API key for ${provider}` }]);
             key = res.key;
         }
-        const store = new store_1.default();
-        const ok = await (0, providers_1.validateProviderKey)(provider, key);
+        const store = new AuthStore();
+        const ok = await validateProviderKey(provider, key);
         if (!ok) {
-            const res = await inquirer_1.default.prompt([{ type: 'confirm', name: 'save', message: `Validation failed or skipped for ${provider}. Save anyway?`, default: false }]);
+            const res = await inquirer.prompt([{ type: 'confirm', name: 'save', message: `Validation failed or skipped for ${provider}. Save anyway?`, default: false }]);
             if (!res.save) {
                 ctx.stdout('Aborted saving credentials.');
                 return;
@@ -54,4 +49,5 @@ const loginCommand = {
         ctx.stdout(`Saved credentials for provider: ${provider}`);
     },
 };
-exports.default = loginCommand;
+export default loginCommand;
+//# sourceMappingURL=login.js.map

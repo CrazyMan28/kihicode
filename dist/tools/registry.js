@@ -1,10 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.registry = exports.ToolRegistry = void 0;
-class ToolRegistry {
-    constructor() {
-        this.tools = new Map();
-    }
+export class ToolRegistry {
+    tools = new Map();
     register(tool) {
         this.tools.set(tool.name, tool);
     }
@@ -25,5 +20,5 @@ class ToolRegistry {
         }));
     }
 }
-exports.ToolRegistry = ToolRegistry;
-exports.registry = new ToolRegistry();
+export const registry = new ToolRegistry();
+//# sourceMappingURL=registry.js.map

@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 const exitCommand = {
     name: 'exit',
     description: 'Exit the application',
@@ -8,4 +6,5 @@ const exitCommand = {
         ctx.exit(0);
     },
 };
-exports.default = exitCommand;
+export default exitCommand;
+//# sourceMappingURL=exit.js.map

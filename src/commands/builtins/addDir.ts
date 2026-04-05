@@ -1,6 +1,6 @@
 import inquirer from 'inquirer';
-import { Command } from '../Command';
-import Indexer from '../../context/indexer';
+import { Command } from '../Command.js';
+import Indexer from '../../context/indexer.js';
 
 const indexer = new Indexer();
 

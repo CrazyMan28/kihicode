@@ -1,10 +1,5 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const indexer_1 = __importDefault(require("../../context/indexer"));
-const indexer = new indexer_1.default();
+import Indexer from '../../context/indexer.js';
+const indexer = new Indexer();
 const contextCommand = {
     name: 'context',
     description: 'Show indexed context directories and files',
@@ -26,4 +21,5 @@ const contextCommand = {
         ctx.stdout(parts.join('\n'));
     },
 };
-exports.default = contextCommand;
+export default contextCommand;
+//# sourceMappingURL=context.js.map

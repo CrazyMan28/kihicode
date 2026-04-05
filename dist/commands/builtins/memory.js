@@ -1,10 +1,5 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const store_1 = __importDefault(require("../../memory/store"));
-const memory = new store_1.default();
+import MemoryStore from '../../memory/store.js';
+const memory = new MemoryStore();
 const memoryCommand = {
     name: 'memory',
     description: 'List memory notes (usage: /memory)',
@@ -18,4 +13,5 @@ const memoryCommand = {
         ctx.stdout(lines.join('\n'));
     },
 };
-exports.default = memoryCommand;
+export default memoryCommand;
+//# sourceMappingURL=memory.js.map

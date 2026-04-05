@@ -1,87 +1,48 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.App = void 0;
-const jsx_runtime_1 = require("react/jsx-runtime");
-const react_1 = require("react");
-const ink_1 = require("ink");
-const ink_text_input_1 = __importDefault(require("ink-text-input"));
-const ink_spinner_1 = __importDefault(require("ink-spinner"));
-const Palette_1 = __importDefault(require("./Palette"));
-const commands_1 = require("../commands");
-const runPythonAgent_1 = __importDefault(require("../utils/runPythonAgent"));
-const manager_1 = require("../subagent/manager");
-const store_1 = __importDefault(require("../auth/store"));
-const loop_js_1 = require("../agent/loop.js");
-const fs_js_1 = require("../tools/definitions/fs.js");
-const shell_js_1 = require("../tools/definitions/shell.js");
-const agent_js_1 = require("../tools/definitions/agent.js");
-const dynamic_js_1 = require("../tools/definitions/dynamic.js");
-const fs = __importStar(require("node:fs/promises"));
-const node_path_1 = __importDefault(require("node:path"));
-const App = ({ initialDir }) => {
-    const [query, setQuery] = (0, react_1.useState)('');
-    const [messages, setMessages] = (0, react_1.useState)([]);
-    const [status, setStatus] = (0, react_1.useState)('idle');
-    const [currentTool, setCurrentTool] = (0, react_1.useState)(null);
-    const [permissionRequest, setPermissionRequest] = (0, react_1.useState)(null);
-    const [showHelp, setShowHelp] = (0, react_1.useState)(false);
-    const [theme, setTheme] = (0, react_1.useState)('dark');
-    const [scrollOffset, setScrollOffset] = (0, react_1.useState)(0);
-    const [autoScroll, setAutoScroll] = (0, react_1.useState)(true);
-    const [clock, setClock] = (0, react_1.useState)(() => new Date().toLocaleTimeString());
-    const [modeState, setModeState] = (0, react_1.useState)(process.env.KIHICODE_MODE || 'safe');
-    const { exit } = (0, ink_1.useApp)();
-    const [paletteOpen, setPaletteOpen] = (0, react_1.useState)(false);
-    const [authStore] = (0, react_1.useState)(() => new store_1.default());
-    const [files, setFiles] = (0, react_1.useState)([]);
-    const [agent] = (0, react_1.useState)(() => {
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useState, useEffect } from 'react';
+import { Box, Text, useApp, useInput } from 'ink';
+import TextInput from 'ink-text-input';
+import Spinner from 'ink-spinner';
+import Palette from './Palette.js';
+import { registry, initCommands } from '../commands.js';
+import runPythonAgent from '../utils/runPythonAgent.js';
+import { subagentManager } from '../subagent/manager.js';
+import AuthStore from '../auth/store.js';
+import { AgentLoop } from '../agent/loop.js';
+import { registerFsTools } from '../tools/definitions/fs.js';
+import { registerShellTools } from '../tools/definitions/shell.js';
+import { registerAgentTools } from '../tools/definitions/agent.js';
+import { registerDynamicTools } from '../tools/definitions/dynamic.js';
+import * as fs from 'node:fs/promises';
+import path from 'node:path';
+export const App = ({ initialDir }) => {
+    const [query, setQuery] = useState('');
+    const [messages, setMessages] = useState([]);
+    const [status, setStatus] = useState('idle');
+    const [currentTool, setCurrentTool] = useState(null);
+    const [permissionRequest, setPermissionRequest] = useState(null);
+    const [showHelp, setShowHelp] = useState(false);
+    const [theme, setTheme] = useState('dark');
+    const [scrollOffset, setScrollOffset] = useState(0);
+    const [autoScroll, setAutoScroll] = useState(true);
+    const [clock, setClock] = useState(() => new Date().toLocaleTimeString());
+    const [modeState, setModeState] = useState(process.env.KIHICODE_MODE || 'safe');
+    const { exit } = useApp();
+    const [paletteOpen, setPaletteOpen] = useState(false);
+    const [authStore] = useState(() => new AuthStore());
+    const [files, setFiles] = useState([]);
+    const [agent] = useState(() => {
         const apiKey = process.env.ANTHROPIC_API_KEY || '';
-        return new loop_js_1.AgentLoop(apiKey);
+        return new AgentLoop(apiKey);
     });
-    (0, react_1.useEffect)(() => {
-        (0, fs_js_1.registerFsTools)();
-        (0, shell_js_1.registerShellTools)();
-        (0, agent_js_1.registerAgentTools)();
-        (0, dynamic_js_1.registerDynamicTools)().catch(console.error);
+    useEffect(() => {
+        registerFsTools();
+        registerShellTools();
+        registerAgentTools();
+        registerDynamicTools().catch(console.error);
         // Ensure commands are initialized for the UI palette
         try {
-            (0, commands_1.initCommands)().catch(() => { });
+            initCommands().catch(() => { });
         }
         catch {
             // ignore
@@ -107,7 +68,7 @@ const App = ({ initialDir }) => {
                 const fileNames = [];
                 for (const e of entries) {
                     try {
-                        const stat = await fs.stat(node_path_1.default.join(initialDir || process.cwd(), e));
+                        const stat = await fs.stat(path.join(initialDir || process.cwd(), e));
                         if (stat.isFile())
                             fileNames.push(e);
                     }
@@ -138,7 +99,7 @@ const App = ({ initialDir }) => {
         mascot: 'red'
     };
     // keyboard shortcuts
-    (0, ink_1.useInput)((input, key) => {
+    useInput((input, key) => {
         if (key.ctrl && input === 'h') {
             setShowHelp(v => !v);
             return;
@@ -151,7 +112,7 @@ const App = ({ initialDir }) => {
                 // open file and display its content
                 (async () => {
                     try {
-                        const content = await fs.readFile(node_path_1.default.join(initialDir || process.cwd(), f), 'utf8');
+                        const content = await fs.readFile(path.join(initialDir || process.cwd(), f), 'utf8');
                         setMessages(prev => [...prev, { role: 'system', content: `Opened file: ${f}` }, { role: 'assistant', content: content }]);
                         setAutoScroll(true);
                     }
@@ -253,7 +214,7 @@ const App = ({ initialDir }) => {
         return out;
     };
     // ensure scrollOffset stays within bounds when messages or terminal size change
-    (0, react_1.useEffect)(() => {
+    useEffect(() => {
         const lines = flattenMessagesToLines(messages);
         const maxOffset = Math.max(0, lines.length - messagesHeight);
         if (autoScroll) {
@@ -264,7 +225,7 @@ const App = ({ initialDir }) => {
         }
     }, [messages, rows, cols, messagesHeight]);
     // clock tick for status bar
-    (0, react_1.useEffect)(() => {
+    useEffect(() => {
         const t = setInterval(() => setClock(new Date().toLocaleTimeString()), 1000);
         return () => clearInterval(t);
     }, []);
@@ -344,21 +305,21 @@ const App = ({ initialDir }) => {
             const cleaned = tokens.map((t) => t.replace(/^"(.*)"$/, '$1'));
             const nameToken = cleaned[0] || '';
             const name = nameToken.startsWith('/') ? nameToken.slice(1) : nameToken;
-            const cmd = commands_1.registry.get(name);
+            const cmd = registry.get(name);
             if (cmd) {
                 const ctx = {
                     stdout: (msg) => setMessages(prev => [...prev, { role: 'system', content: msg }]),
                     exit: (code) => setMessages(prev => [...prev, { role: 'system', content: `Exit(${code ?? 0})` }]),
-                    registry: commands_1.registry,
-                    subagentManager: manager_1.subagentManager,
+                    registry,
+                    subagentManager,
                     authStore,
                 };
-                await commands_1.registry.execute(value, ctx);
+                await registry.execute(value, ctx);
                 return;
             }
             try {
                 setMessages(prev => [...prev, { role: 'system', content: `Running external agent: ${cleaned.join(' ')}` }]);
-                const res = await (0, runPythonAgent_1.default)(cleaned);
+                const res = await runPythonAgent(cleaned);
                 if (res.stdout)
                     setMessages(prev => [...prev, { role: 'assistant', content: res.stdout }]);
                 if (res.stderr)
@@ -397,7 +358,7 @@ const App = ({ initialDir }) => {
             setStatus('idle');
         }
     };
-    return ((0, jsx_runtime_1.jsxs)(ink_1.Box, { flexDirection: "column", padding: 1, children: [paletteOpen && ((0, jsx_runtime_1.jsx)(ink_1.Box, { marginBottom: 1, children: (0, jsx_runtime_1.jsx)(Palette_1.default, { commands: commands_1.registry.list().map((c) => ({ name: c.name, description: c.description })), onSelect: (name) => { setQuery('/' + name + ' '); setPaletteOpen(false); }, onClose: () => setPaletteOpen(false) }) })), (0, jsx_runtime_1.jsxs)(ink_1.Box, { flexDirection: "row", gap: 1, marginBottom: 1, children: [(0, jsx_runtime_1.jsxs)(ink_1.Box, { flexGrow: 3, paddingRight: 1, children: [(0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.header, bold: true, children: "Kihicode v1.0.0" }), (0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.muted, children: "--- Agentic AI CLI ---" }), (0, jsx_runtime_1.jsx)(ink_1.Box, { marginTop: 1 }), (() => {
+    return (_jsxs(Box, { flexDirection: "column", padding: 1, children: [paletteOpen && (_jsx(Box, { marginBottom: 1, children: _jsx(Palette, { commands: registry.list().map((c) => ({ name: c.name, description: c.description })), onSelect: (name) => { setQuery('/' + name + ' '); setPaletteOpen(false); }, onClose: () => setPaletteOpen(false) }) })), _jsxs(Box, { flexDirection: "row", gap: 1, marginBottom: 1, children: [_jsxs(Box, { flexGrow: 3, paddingRight: 1, children: [_jsx(Text, { color: themeColors.header, bold: true, children: "Kihicode v1.0.0" }), _jsx(Text, { color: themeColors.muted, children: "--- Agentic AI CLI ---" }), _jsx(Box, { marginTop: 1 }), (() => {
                                 const leftW = Math.max(36, Math.floor(cols * 0.62));
                                 const usage = [
                                     'Usage',
@@ -410,8 +371,8 @@ const App = ({ initialDir }) => {
                                     '/exit               Quit the app',
                                 ];
                                 const leftLines = framedBoxLines(leftW, headerHeight, usage);
-                                return (0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.muted, children: leftLines.join('\n') });
-                            })(), (0, jsx_runtime_1.jsxs)(ink_1.Box, { marginTop: 1, children: [(0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.accent, children: "Files:" }), (0, jsx_runtime_1.jsxs)(ink_1.Text, { children: [" ", files.map((f, i) => `[${i + 1}] ${f}`).join('  ')] })] })] }), (0, jsx_runtime_1.jsx)(ink_1.Box, { flexGrow: 2, children: (() => {
+                                return _jsx(Text, { color: themeColors.muted, children: leftLines.join('\n') });
+                            })(), _jsxs(Box, { marginTop: 1, children: [_jsx(Text, { color: themeColors.accent, children: "Files:" }), _jsxs(Text, { children: [" ", files.map((f, i) => `[${i + 1}] ${f}`).join('  ')] })] })] }), _jsx(Box, { flexGrow: 2, children: (() => {
                             const rightW = Math.max(24, Math.floor(cols * 0.32));
                             const halfH = Math.max(6, Math.floor((headerHeight - 2) / 2));
                             const recentItems = [
@@ -429,14 +390,14 @@ const App = ({ initialDir }) => {
                             ];
                             const recentLines = framedBoxLines(rightW, halfH + 2, ['Recent activity', '', ...recentItems]);
                             const freshLines = framedBoxLines(rightW, headerHeight - (halfH + 2), ["What's new", '', ...freshItems]);
-                            return ((0, jsx_runtime_1.jsxs)(ink_1.Box, { flexDirection: "column", children: [(0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.muted, children: recentLines.join('\n') }), (0, jsx_runtime_1.jsx)(ink_1.Box, { marginTop: 1 }), (0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.muted, children: freshLines.join('\n') })] }));
-                        })() })] }), showHelp && ((0, jsx_runtime_1.jsxs)(ink_1.Box, { borderStyle: "double", padding: 1, flexDirection: "column", marginBottom: 1, children: [(0, jsx_runtime_1.jsx)(ink_1.Text, { bold: true, color: themeColors.accent, children: "Keyboard Shortcuts" }), (0, jsx_runtime_1.jsx)(ink_1.Box, { marginTop: 1 }), (0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.muted, children: "Ctrl+H \u2014 Toggle this help" }), (0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.muted, children: "Ctrl+Q \u2014 Quit" }), (0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.muted, children: "Ctrl+T \u2014 Toggle theme" }), (0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.muted, children: "Ctrl+B \u2014 Background current command (simulated)" }), (0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.muted, children: "Enter \u2014 Submit input" }), (0, jsx_runtime_1.jsx)(ink_1.Box, { marginTop: 1 }), (0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.muted, children: "Type /help for commands. Press Ctrl+H to close." })] })), (0, jsx_runtime_1.jsx)(ink_1.Box, { borderStyle: "single", padding: 1, flexDirection: "column", flexGrow: 1, marginBottom: 1, children: (() => {
+                            return (_jsxs(Box, { flexDirection: "column", children: [_jsx(Text, { color: themeColors.muted, children: recentLines.join('\n') }), _jsx(Box, { marginTop: 1 }), _jsx(Text, { color: themeColors.muted, children: freshLines.join('\n') })] }));
+                        })() })] }), showHelp && (_jsxs(Box, { borderStyle: "double", padding: 1, flexDirection: "column", marginBottom: 1, children: [_jsx(Text, { bold: true, color: themeColors.accent, children: "Keyboard Shortcuts" }), _jsx(Box, { marginTop: 1 }), _jsx(Text, { color: themeColors.muted, children: "Ctrl+H \u2014 Toggle this help" }), _jsx(Text, { color: themeColors.muted, children: "Ctrl+Q \u2014 Quit" }), _jsx(Text, { color: themeColors.muted, children: "Ctrl+T \u2014 Toggle theme" }), _jsx(Text, { color: themeColors.muted, children: "Ctrl+B \u2014 Background current command (simulated)" }), _jsx(Text, { color: themeColors.muted, children: "Enter \u2014 Submit input" }), _jsx(Box, { marginTop: 1 }), _jsx(Text, { color: themeColors.muted, children: "Type /help for commands. Press Ctrl+H to close." })] })), _jsx(Box, { borderStyle: "single", padding: 1, flexDirection: "column", flexGrow: 1, marginBottom: 1, children: (() => {
                     const allLines = flattenMessagesToLines(messages);
                     const maxOffset = Math.max(0, allLines.length - messagesHeight);
                     const offset = Math.max(0, Math.min(scrollOffset, maxOffset));
                     const visible = allLines.slice(offset, offset + messagesHeight);
                     if (visible.length === 0)
-                        return (0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.muted, children: "No messages yet \u2014 try a command or chat with the assistant." });
+                        return _jsx(Text, { color: themeColors.muted, children: "No messages yet \u2014 try a command or chat with the assistant." });
                     // build scrollbar track
                     const totalLines = allLines.length;
                     const trackHeight = messagesHeight;
@@ -453,14 +414,14 @@ const App = ({ initialDir }) => {
                         for (let j = 0; j < trackHeight; j++)
                             scrollbarChars.push(' ');
                     }
-                    return ((0, jsx_runtime_1.jsx)(ink_1.Box, { flexDirection: "column", children: visible.map((ln, i) => {
+                    return (_jsx(Box, { flexDirection: "column", children: visible.map((ln, i) => {
                             const scChar = scrollbarChars[i] || ' ';
                             if (!ln.text)
-                                return ((0, jsx_runtime_1.jsxs)(ink_1.Box, { flexDirection: "row", children: [(0, jsx_runtime_1.jsx)(ink_1.Box, { flexGrow: 1, children: (0, jsx_runtime_1.jsx)(ink_1.Text, { children: ' ' }) }), (0, jsx_runtime_1.jsx)(ink_1.Box, { width: 2, children: (0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.accent, children: scChar }) })] }, i));
+                                return (_jsxs(Box, { flexDirection: "row", children: [_jsx(Box, { flexGrow: 1, children: _jsx(Text, { children: ' ' }) }), _jsx(Box, { width: 2, children: _jsx(Text, { color: themeColors.accent, children: scChar }) })] }, i));
                             const isLabel = ln.text.endsWith(':') && ln.role;
                             const color = ln.role === 'user' ? 'green' : ln.role === 'assistant' ? themeColors.header : 'yellow';
-                            return ((0, jsx_runtime_1.jsxs)(ink_1.Box, { flexDirection: "row", children: [(0, jsx_runtime_1.jsx)(ink_1.Box, { flexGrow: 1, children: isLabel ? ((0, jsx_runtime_1.jsx)(ink_1.Text, { bold: true, color: color, children: ln.text })) : ((0, jsx_runtime_1.jsx)(ink_1.Text, { children: ln.text })) }), (0, jsx_runtime_1.jsx)(ink_1.Box, { width: 2, children: (0, jsx_runtime_1.jsx)(ink_1.Text, { color: scChar === '█' ? themeColors.accent : themeColors.muted, children: scChar }) })] }, i));
+                            return (_jsxs(Box, { flexDirection: "row", children: [_jsx(Box, { flexGrow: 1, children: isLabel ? (_jsx(Text, { bold: true, color: color, children: ln.text })) : (_jsx(Text, { children: ln.text })) }), _jsx(Box, { width: 2, children: _jsx(Text, { color: scChar === '█' ? themeColors.accent : themeColors.muted, children: scChar }) })] }, i));
                         }) }));
-                })() }), (0, jsx_runtime_1.jsx)(ink_1.Box, { children: (0, jsx_runtime_1.jsx)(ink_1.Text, { color: "gray", children: Array(Math.max(10, (process.stdout?.columns || 80) - 2)).fill('─').join('') }) }), (0, jsx_runtime_1.jsxs)(ink_1.Box, { children: [(0, jsx_runtime_1.jsx)(ink_1.Text, { color: "white", bold: true, children: "\u276F " }), (0, jsx_runtime_1.jsxs)(ink_1.Box, { flexDirection: "column", flexGrow: 1, children: [(0, jsx_runtime_1.jsx)(ink_text_input_1.default, { value: query, onChange: setQuery, onSubmit: handleSubmit, placeholder: 'try "edit < filepath > to ..."' }), status !== 'idle' && ((0, jsx_runtime_1.jsx)(ink_1.Box, { marginTop: 1, children: (0, jsx_runtime_1.jsxs)(ink_1.Text, { color: "yellow", children: [(0, jsx_runtime_1.jsx)(ink_spinner_1.default, { type: "dots" }), " ", status, " ", currentTool && `(${currentTool})`] }) }))] })] }), (0, jsx_runtime_1.jsxs)(ink_1.Box, { marginTop: 1, paddingX: 1, children: [(0, jsx_runtime_1.jsx)(ink_1.Box, { flexGrow: 1, children: (0, jsx_runtime_1.jsx)(ink_1.Text, { color: themeColors.muted, children: clock }) }), (0, jsx_runtime_1.jsx)(ink_1.Box, { children: (0, jsx_runtime_1.jsxs)(ink_1.Text, { color: themeColors.accent, children: ["Mode: ", modeState] }) }), (0, jsx_runtime_1.jsx)(ink_1.Box, { marginLeft: 2, children: (0, jsx_runtime_1.jsx)(ink_1.Text, { color: "gray", children: initialDir }) })] })] }));
+                })() }), _jsx(Box, { children: _jsx(Text, { color: "gray", children: Array(Math.max(10, (process.stdout?.columns || 80) - 2)).fill('─').join('') }) }), _jsxs(Box, { children: [_jsx(Text, { color: "white", bold: true, children: "\u276F " }), _jsxs(Box, { flexDirection: "column", flexGrow: 1, children: [_jsx(TextInput, { value: query, onChange: setQuery, onSubmit: handleSubmit, placeholder: 'try "edit < filepath > to ..."' }), status !== 'idle' && (_jsx(Box, { marginTop: 1, children: _jsxs(Text, { color: "yellow", children: [_jsx(Spinner, { type: "dots" }), " ", status, " ", currentTool && `(${currentTool})`] }) }))] })] }), _jsxs(Box, { marginTop: 1, paddingX: 1, children: [_jsx(Box, { flexGrow: 1, children: _jsx(Text, { color: themeColors.muted, children: clock }) }), _jsx(Box, { children: _jsxs(Text, { color: themeColors.accent, children: ["Mode: ", modeState] }) }), _jsx(Box, { marginLeft: 2, children: _jsx(Text, { color: "gray", children: initialDir }) })] })] }));
 };
-exports.App = App;
+//# sourceMappingURL=App.js.map
