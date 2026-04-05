@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Kihicode Web UI</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #messages { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: auto; white-space: pre-wrap; }
+    #controls { margin-top: 10px; }
+    input[type="text"] { padding: 6px; }
+    button { margin-left: 6px; }
+  </style>
+</head>
+<body>
+  <h1>Kihicode Web UI</h1>
+  <div id="messages"></div>
+  <div id="controls">
+    <input id="input" type="text" style="width:70%" placeholder="Type a message..." />
+    <button id="send">Send</button>
+    <button id="login">Login</button>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>

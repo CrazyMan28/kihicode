@@ -1,0 +1,62 @@
+#!/usr/bin/env node
+import { Command } from 'commander';
+import dotenv from 'dotenv';
+import React from 'react';
+import { render } from 'ink';
+import { App } from './ui/App.js';
+dotenv.config();
+const program = new Command();
+program
+    .name('kihicode')
+    .description('High-performance Agentic AI CLI/TUI')
+    .version('1.0.0')
+    .option('-d, --dir <path>', 'Working directory', process.cwd())
+    .action((options) => {
+    // Enter the terminal's alternate screen buffer so the terminal's scrollback doesn't move
+    const enterAlternateBuffer = () => {
+        try {
+            process.stdout.write('\x1b[?1049h');
+        }
+        catch (err) {
+            // ignore
+        }
+    };
+    const leaveAlternateBuffer = () => {
+        try {
+            process.stdout.write('\x1b[?1049l');
+        }
+        catch (err) {
+            // ignore
+        }
+    };
+    enterAlternateBuffer();
+    // Start the TUI
+    const instance = render(React.createElement(App, { initialDir: options.dir }));
+    const cleanup = (code = 0) => {
+        try {
+            if (instance && typeof instance.unmount === 'function') {
+                instance.unmount();
+            }
+        }
+        catch (err) {
+            // ignore
+        }
+        leaveAlternateBuffer();
+        // only exit here if called from signal handlers
+    };
+    process.on('exit', () => cleanup());
+    process.on('SIGINT', () => {
+        cleanup();
+        process.exit(0);
+    });
+    process.on('SIGTERM', () => {
+        cleanup();
+        process.exit(0);
+    });
+    process.on('uncaughtException', (err) => {
+        console.error(err);
+        cleanup();
+        process.exit(1);
+    });
+});
+program.parse();

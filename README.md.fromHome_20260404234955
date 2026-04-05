@@ -1,0 +1,63 @@
+# Kihicode
+
+Kihicode is an agentic AI CLI/TUI for development tasks. This repo contains a minimal Ink-based TUI, a tool registry, and an agent loop that can call tools and request permissions.
+
+## Quick start
+
+1. Copy the env example and add your keys:
+
+```bash
+cp .env.example .env
+# Edit .env and fill ANTHROPIC_API_KEY
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Run Kihicode:
+
+```bash
+npm start
+```
+
+## Development
+
+- Start in watch/dev mode:
+
+```bash
+npm run dev
+```
+
+## Basic commands (in-app)
+
+- `/help` — show commands
+- `/mode safe|yolo` — toggle permission mode (`safe` asks before running sensitive tools)
+- `/exit` — quit
+
+When a tool requires permission in `safe` mode, reply with:
+- `y` — allow
+- `n` — deny
+- `edit <JSON>` — allow with edited arguments (JSON object)
+
+## Plugins
+
+Plugins are saved to `~/.kihicode/plugins` as TypeScript modules. The `createTool` tool will attempt to hot-load created plugins when possible; otherwise restart Kihicode to load new plugins.
+
+## Notes
+
+- This is an early implementation. The agent currently uses Anthropic by default; you can add other adapters by implementing the `LLMAdapter` interface in `src/agent/llm.ts`.
+- Be cautious running in `yolo` mode — the agent will execute sensitive actions without prompting.
+
+## UI behavior: pinned header & scrollable viewport
+
+- Kihicode uses a full-screen TUI layout. The header, side panels, and footer remain fixed; the main message area is an internal viewport that scrolls independently so the terminal's scrollback is not used.
+- Use the arrow keys or `PageUp` / `PageDown` to scroll the message viewport. Press `End` to jump to the bottom and re-enable auto-scroll.
+- Toggle the help overlay with `Ctrl+H`. Quit with `Ctrl+Q`. Toggle theme with `Ctrl+T`.
+- The TUI adapts to the current terminal size and will attempt to fill the screen; if your terminal resizes, the layout will recompute on the next input or message.
+
+If you want to see a fully locked app-like interface (no terminal scroll), run `kihicode` in a normal terminal — the app uses an internal viewport and doesn't rely on the terminal scrollback.
+
+Implementation note: Kihicode enters the terminal's Alternate Screen Buffer when it starts. That prevents the terminal emulator's scrollback from moving while the TUI runs, so the header/footer remain pinned and only the internal viewport scrolls. The app restores the normal buffer on exit (SIGINT, SIGTERM, or uncaught exceptions).

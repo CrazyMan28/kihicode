@@ -1,0 +1,12 @@
+import { Command } from '../Command';
+
+const exitCommand: Command = {
+  name: 'exit',
+  description: 'Exit the application',
+  execute(ctx) {
+    ctx.stdout('Exiting...');
+    ctx.exit(0);
+  },
+};
+
+export default exitCommand;
